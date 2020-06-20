@@ -1,0 +1,1 @@
+This is the AgentBased_Epidemic_Simulation model. Please contact the developers for more information.
