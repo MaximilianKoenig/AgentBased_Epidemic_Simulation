@@ -1,0 +1,67 @@
+<repast.simphony.data2.engine.DataSetDescriptor simphonyVersion="2.7.0">
+  <name>A Data Set</name>
+  <type>AGGREGATE</type>
+  <inclTick>true</inclTick>
+  <inclBatchRun>false</inclBatchRun>
+  <inclRandomSeed>false</inclRandomSeed>
+  <scheduleParams>
+    <start>1.0</start>
+    <interval>1.0</interval>
+    <priority>-Infinity</priority>
+    <pType>LAST</pType>
+    <duration>-1.0</duration>
+    <frequency>REPEAT</frequency>
+    <hashCode>-31138579</hashCode>
+  </scheduleParams>
+  <atEnd>false</atEnd>
+  <methodDataSources class="linked-hash-map">
+    <entry>
+      <string>Exposed</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Exposed</id>
+        <className>agentBased_Epidemic_Simulation.Person</className>
+        <methodName>isExposed</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>Susceptible</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Susceptible</id>
+        <className>agentBased_Epidemic_Simulation.Person</className>
+        <methodName>isSusceptible</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>Infectious</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Infectious</id>
+        <className>agentBased_Epidemic_Simulation.Person</className>
+        <methodName>isInfectious</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>Symptomatic</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Symptomatic</id>
+        <className>agentBased_Epidemic_Simulation.Person</className>
+        <methodName>isSymptomatic</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>Removed</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Removed</id>
+        <className>agentBased_Epidemic_Simulation.Person</className>
+        <methodName>isRemoved</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+  </methodDataSources>
+  <countSources class="linked-hash-map"/>
+  <customNADataSources class="linked-hash-map"/>
+  <customAggDataSources class="linked-hash-map"/>
+</repast.simphony.data2.engine.DataSetDescriptor>

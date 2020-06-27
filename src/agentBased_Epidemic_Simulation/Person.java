@@ -1,7 +1,11 @@
 package agentBased_Epidemic_Simulation;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import repast.simphony.context.Context;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.query.space.grid.GridCell;
 import repast.simphony.query.space.grid.GridCellNgh;
@@ -12,6 +16,7 @@ import repast.simphony.space.continuous.NdPoint;
 import repast.simphony.space.grid.Grid;
 import repast.simphony.space.grid.GridPoint;
 import repast.simphony.statecharts.AbstractState;
+import repast.simphony.util.ContextUtils;
 import repast.simphony.util.SimUtilities;
 import agentBased_Epidemic_Simulation.chart.InfectionState;
 import repast.simphony.ui.probe.ProbedProperty;
@@ -20,6 +25,8 @@ public class Person {
 	
 	private ContinuousSpace<Object> space;
 	private Grid<Object> grid;
+	private Place home;
+	private Place workPlace;
 	@ProbedProperty(displayName="InfectionState")
 	InfectionState infectionState = InfectionState.createStateChart(this, 0);
 
@@ -35,16 +42,53 @@ public class Person {
 		return result == null ? "" : result.toString();
 	}
 	
-	@ScheduledMethod(start = 1, interval = 1)
+	public Place getHome() {
+		return home;
+	}
+
+	public void setHome(Place home) {
+		this.home = home;
+	}
+
+	public Place getWorkPlace() {
+		return workPlace;
+	}
+
+	public void setWorkPlace(Place workPlace) {
+		this.workPlace = workPlace;
+	}
+
+	@ScheduledMethod(start = 1, interval = 1, priority = 0)
 	public void step() {
-		GridPoint pt = grid.getLocation(this);
+//		GridPoint pt = grid.getLocation(this);
+//		
+//		GridCellNgh<Person> nghCreator = new GridCellNgh<>(grid, pt, Person.class, 1, 1);
+//		
+//		List<GridCell<Person>> gridCells = nghCreator.getNeighborhood(true);
+//		SimUtilities.shuffle(gridCells, RandomHelper.getUniform());
+//		
+//		moveTowards(gridCells.get(0).getPoint());
+//		if (isInfectious()) infectAdjacent();
+
+		List<Place> places = Arrays.asList(home, workPlace);
+		SimUtilities.shuffle(places, RandomHelper.getUniform());
+		Place next = places.get(0);
+		if (RandomHelper.nextDouble() > 0.8) {
+			Context<Object> context = ContextUtils.getContext(this);
+			List<Place> leisurePlaces = StreamSupport.stream(context.getObjects(Place.class).spliterator(), false)
+					.map(Place.class::cast)
+					.filter(place -> place.getType().equals(PlaceType.LEISURE))
+					.collect(Collectors.toList());
+			Place leisurePlace = leisurePlaces.get(RandomHelper.nextIntFromTo(0, leisurePlaces.size() - 1));
+			next = leisurePlace;
+		}
+		moveTo(next);
 		
-		GridCellNgh<Person> nghCreator = new GridCellNgh<>(grid, pt, Person.class, 1, 1);
-		
-		List<GridCell<Person>> gridCells = nghCreator.getNeighborhood(true);
-		SimUtilities.shuffle(gridCells, RandomHelper.getUniform());
-		
-		moveTowards(gridCells.get(0).getPoint());
+	}
+	
+
+	@ScheduledMethod(start = 1, interval = 1, priority = -1)
+	public void sneeze() {
 		if (isInfectious()) infectAdjacent();
 	}
 	
@@ -59,13 +103,19 @@ public class Person {
 		}
 	}
 	
+	public void moveTo(Place place) {
+		GridPoint location = grid.getLocation(place);
+		grid.moveTo(this, location.getX(), location.getY());
+		space.moveTo(this, location.getX() + RandomHelper.nextDoubleFromTo(0.2, 0.8), location.getY() + RandomHelper.nextDoubleFromTo(0.2, 0.8));
+	}
+	
 	public void infectAdjacent() {
 		GridPoint pt = grid.getLocation(this);
-		GridCellNgh<Person> nghCreator = new GridCellNgh<>(grid, pt, Person.class, 2, 2);
-		List<GridCell<Person>> gridCells = nghCreator.getNeighborhood(true);
-		
-		for(GridCell<Person> cell : gridCells) {
-			for(Person person : cell.items()) {
+		Iterable<Object> others = grid.getObjectsAt(pt.getX(), pt.getY());
+		for(Object other : others) {
+			if(!(other instanceof Person)) continue;
+			Person person = (Person) other;
+			if (RandomHelper.nextDouble() > 0.5) {
 				person.exposed();
 			}
 		}
@@ -75,9 +125,33 @@ public class Person {
 		infectionState.receiveMessage("exposed");
 	}
 	
-	public boolean isInfectious() {
+	public boolean is(String state) {
 		return infectionState.getCurrentStates().stream()
 				.map(AbstractState::getId)
-				.anyMatch("Infectious"::equals);
+				.anyMatch(state::equals);
+	}
+
+	public boolean isSusceptible() {
+		return is("Susceptible");
+	}
+	
+	public boolean isExposed() {
+		return is("Exposed");
+	}
+	
+	public boolean isInfectious() {
+		return is("Infectious");
+	}
+	
+	public boolean isSymptomatic() {
+		return is("Symptomatic");
+	}
+	
+	public boolean isNonSymptomatic() {
+		return is("Non-Symptomatic");
+	}
+	
+	public boolean isRemoved() {
+		return is("Removed");
 	}
 }

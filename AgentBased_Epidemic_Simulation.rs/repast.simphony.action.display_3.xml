@@ -4,7 +4,7 @@
   <styles>
     <entry>
       <string>agentBased_Epidemic_Simulation.Person</string>
-      <string>agentBased_Epidemic_Simulation.PersonStyle</string>
+      <string>agentBased_Epidemic_Simulation.styles.PersonStyle</string>
     </entry>
   </styles>
   <editedStyles>
@@ -78,5 +78,8 @@
     <blue>255</blue>
     <alpha>255</alpha>
   </backgroundColor>
-  <valueLayers/>
+  <valueLayerStyleName>agentBased_Epidemic_Simulation.styles.PlaceStyle</valueLayerStyleName>
+  <valueLayers>
+    <string>Place Matrix</string>
+  </valueLayers>
 </repast.simphony.visualization.engine.CartesianDisplayDescriptor>
