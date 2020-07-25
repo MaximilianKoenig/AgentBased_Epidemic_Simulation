@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns="http://repast.sf.net/statecharts" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation">
-  <StateMachine xmi:id="_iNvQ0bMPEeqM7vXeYvDqVw" agentType="agentBased_Epidemic_Simulation.Person" package="agentBased_Epidemic_Simulation.chart" className="InfectionState" nextID="54" id="InfectionState" uuid="_iNvQ0LMPEeqM7vXeYvDqVw">
+  <StateMachine xmi:id="_iNvQ0bMPEeqM7vXeYvDqVw" agentType="agentBased_Epidemic_Simulation.Person" package="agentBased_Epidemic_Simulation.chart" className="InfectionState" nextID="92" id="InfectionState" uuid="_iNvQ0LMPEeqM7vXeYvDqVw">
     <states xmi:type="State" xmi:id="_ruKeMLMPEeqM7vXeYvDqVw" id="Susceptible" uuid="_ruKeMbMPEeqM7vXeYvDqVw"/>
     <states xmi:type="State" xmi:id="_5csDsLMPEeqM7vXeYvDqVw" id="Exposed" uuid="_5csDsbMPEeqM7vXeYvDqVw"/>
     <states xmi:type="CompositeState" xmi:id="_-cT_YLMPEeqM7vXeYvDqVw" id="Infectious" uuid="_-cT_YbMPEeqM7vXeYvDqVw">
@@ -11,11 +11,11 @@
     <states xmi:type="State" xmi:id="_XsGooLMQEeqM7vXeYvDqVw" id="Removed" uuid="_XsGoobMQEeqM7vXeYvDqVw"/>
     <states xmi:type="PseudoState" xmi:id="_C2ZvoLMREeqM7vXeYvDqVw" id="Entry State Pointer" type="entry"/>
     <transitions xmi:type="Transition" xmi:id="_F02TMLMQEeqM7vXeYvDqVw" from="_ruKeMLMPEeqM7vXeYvDqVw" to="_5csDsLMPEeqM7vXeYvDqVw" triggerType="message" messageCheckerType="equals" messageCheckerClass="String" messageCheckerCode="&quot;exposed&quot;;" id="Transition 8" triggerTimedCode="5" uuid="_F02TMbMQEeqM7vXeYvDqVw"/>
-    <transitions xmi:type="Transition" xmi:id="_GWtqILMQEeqM7vXeYvDqVw" from="_5csDsLMPEeqM7vXeYvDqVw" to="_-cT_YLMPEeqM7vXeYvDqVw" triggerType="timed" messageCheckerClass="Object" id="Transition 9" triggerTimedCode="14;" uuid="_GWuRMLMQEeqM7vXeYvDqVw"/>
+    <transitions xmi:type="Transition" xmi:id="_GWtqILMQEeqM7vXeYvDqVw" from="_5csDsLMPEeqM7vXeYvDqVw" to="_-cT_YLMPEeqM7vXeYvDqVw" triggerType="timed" messageCheckerClass="Object" id="Transition 9" triggerTimedCode="agent.getPreInfectious() * ScenarioBuilder.daysToTicks;" triggerTimedCodeImports="" uuid="_GWuRMLMQEeqM7vXeYvDqVw"/>
     <transitions xmi:type="Transition" xmi:id="_K1W_sLMQEeqM7vXeYvDqVw" from="_KH4OoLMQEeqM7vXeYvDqVw" to="_CXDWoLMQEeqM7vXeYvDqVw" id="Transition 11" uuid="_K1W_sbMQEeqM7vXeYvDqVw"/>
-    <transitions xmi:type="Transition" xmi:id="_Lfx1sLMQEeqM7vXeYvDqVw" from="_CXDWoLMQEeqM7vXeYvDqVw" to="_BAE8oLMQEeqM7vXeYvDqVw" triggerType="timed" messageCheckerClass="Object" id="Transition 12" triggerTimedCode="14;" uuid="_Lfx1sbMQEeqM7vXeYvDqVw"/>
+    <transitions xmi:type="Transition" xmi:id="_Lfx1sLMQEeqM7vXeYvDqVw" from="_CXDWoLMQEeqM7vXeYvDqVw" to="_BAE8oLMQEeqM7vXeYvDqVw" triggerType="timed" messageCheckerClass="Object" id="Transition 12" triggerTimedCode="(agent.getIncubationTime() - agent.getPreInfectious()) * ScenarioBuilder.daysToTicks;" uuid="_Lfx1sbMQEeqM7vXeYvDqVw"/>
     <transitions xmi:type="Transition" xmi:id="_ESpEILMREeqM7vXeYvDqVw" from="_C2ZvoLMREeqM7vXeYvDqVw" to="_ruKeMLMPEeqM7vXeYvDqVw" id="Transition 23" uuid="_ESprMLMREeqM7vXeYvDqVw"/>
-    <transitions xmi:type="Transition" xmi:id="_x9zlYLMREeqM7vXeYvDqVw" from="_BAE8oLMQEeqM7vXeYvDqVw" to="_XsGooLMQEeqM7vXeYvDqVw" triggerType="timed" messageCheckerClass="Object" id="Transition 27" triggerTimedCode="14;" uuid="_x9zlYbMREeqM7vXeYvDqVw"/>
+    <transitions xmi:type="Transition" xmi:id="_x9zlYLMREeqM7vXeYvDqVw" from="_BAE8oLMQEeqM7vXeYvDqVw" to="_XsGooLMQEeqM7vXeYvDqVw" triggerType="timed" messageCheckerClass="Object" id="Transition 27" triggerTimedCode="RandomHelper.getUniform().nextDoubleFromTo(10, 14) * ScenarioBuilder.daysToTicks;" triggerTimedCodeImports="import repast.simphony.random.RandomHelper;" uuid="_x9zlYbMREeqM7vXeYvDqVw"/>
   </StateMachine>
   <notation:Diagram xmi:id="_iOb0YLMPEeqM7vXeYvDqVw" type="Statechart" element="_iNvQ0bMPEeqM7vXeYvDqVw" name="statechart.rsc" measurementUnit="Pixel">
     <children xmi:type="notation:Shape" xmi:id="_ruNhgLMPEeqM7vXeYvDqVw" type="2003" element="_ruKeMLMPEeqM7vXeYvDqVw" fontName="Segoe UI">

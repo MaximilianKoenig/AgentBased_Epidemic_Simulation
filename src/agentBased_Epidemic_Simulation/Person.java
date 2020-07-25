@@ -18,6 +18,7 @@ import repast.simphony.space.grid.GridPoint;
 import repast.simphony.statecharts.AbstractState;
 import repast.simphony.util.ContextUtils;
 import repast.simphony.util.SimUtilities;
+import agentBased_Epidemic_Simulation.chart.DailyRoutine;
 import agentBased_Epidemic_Simulation.chart.InfectionState;
 import repast.simphony.ui.probe.ProbedProperty;
 
@@ -29,6 +30,24 @@ public class Person {
 	private Place workPlace;
 	@ProbedProperty(displayName="InfectionState")
 	InfectionState infectionState = InfectionState.createStateChart(this, 0);
+	
+	@ProbedProperty(displayName="DailyRoutine")
+	DailyRoutine dailyRoutine = DailyRoutine.createStateChart(this, 0);
+	
+	static int foocount = 0;
+	
+	private double incubationTime = Random.nextLogNormal(1.621, 0.418);
+	private double preInfectious = Math.max(0.1, incubationTime - RandomHelper.getUniform().nextDoubleFromTo(0, 3));
+	{
+		if(preInfectious == 0) {
+			foocount ++;
+			System.out.println(foocount);
+		}
+	}
+	private int workStart = (int) RandomHelper.getNormal().nextDouble(8, 2) % 24;
+	private int workEnd = (workStart + (int) Random.nextSymmetricTriangular(8, 4) + 24) % 24;
+	private int sleepStart = (workStart - (int) Random.nextSymmetricTriangular(8, 3) + 24) % 24;
+
 
 	public Person(ContinuousSpace<Object> space, Grid<Object> grid, boolean exposed) {
 		this.space = space;
@@ -42,50 +61,62 @@ public class Person {
 		return result == null ? "" : result.toString();
 	}
 	
-	public Place getHome() {
-		return home;
+	public String getDailyRoutineState(){
+		if (dailyRoutine == null) return "";
+		Object result = dailyRoutine.getCurrentSimpleState();
+		return result == null ? "" : result.toString();
 	}
 
-	public void setHome(Place home) {
-		this.home = home;
-	}
-
-	public Place getWorkPlace() {
-		return workPlace;
-	}
-
-	public void setWorkPlace(Place workPlace) {
-		this.workPlace = workPlace;
-	}
-
-	@ScheduledMethod(start = 1, interval = 1, priority = 0)
-	public void step() {
-//		GridPoint pt = grid.getLocation(this);
-//		
-//		GridCellNgh<Person> nghCreator = new GridCellNgh<>(grid, pt, Person.class, 1, 1);
-//		
-//		List<GridCell<Person>> gridCells = nghCreator.getNeighborhood(true);
-//		SimUtilities.shuffle(gridCells, RandomHelper.getUniform());
-//		
-//		moveTowards(gridCells.get(0).getPoint());
-//		if (isInfectious()) infectAdjacent();
-
-		List<Place> places = Arrays.asList(home, workPlace);
-		SimUtilities.shuffle(places, RandomHelper.getUniform());
-		Place next = places.get(0);
-		if (RandomHelper.nextDouble() > 0.8) {
-			Context<Object> context = ContextUtils.getContext(this);
-			List<Place> leisurePlaces = StreamSupport.stream(context.getObjects(Place.class).spliterator(), false)
-					.map(Place.class::cast)
-					.filter(place -> place.getType().equals(PlaceType.LEISURE))
-					.collect(Collectors.toList());
-			Place leisurePlace = leisurePlaces.get(RandomHelper.nextIntFromTo(0, leisurePlaces.size() - 1));
-			next = leisurePlace;
-		}
-		moveTo(next);
-		
+	public boolean isTimeToWork() {
+		return Clock.isTimeBetween(workStart, workEnd);
 	}
 	
+	public boolean isTimeToSleep() {
+		return Clock.isTimeBetween(sleepStart, workStart);
+	}
+	
+	public boolean isFreeTime() {
+		return Clock.isTimeBetween(workEnd, sleepStart);
+	}
+	
+	public void goToWork() {
+		if(isSymptomatic()) {
+			moveTo(home);
+			return;
+		}
+		moveTo(workPlace);
+	}
+	
+	public void goToBed() {
+		moveTo(home);
+	}
+	
+	public void goToSpendFreeTime() {
+		if(isSymptomatic()) {
+			moveTo(home);
+			return;
+		}
+		
+		if(RandomHelper.nextDoubleFromTo(0, 1) > 0.33) {
+			Place leisurePlace = null;
+			double distanceFromHome = Integer.MAX_VALUE;
+			for(int i = 10; i < distanceFromHome; i++) {
+				leisurePlace = ScenarioBuilder.leisurePlaces.get(RandomHelper.nextIntFromTo(0, ScenarioBuilder.leisurePlaces.size() - 1));
+				distanceFromHome = space.getDistance(space.getLocation(home), space.getLocation(leisurePlace));
+			}
+			moveTo(leisurePlace);
+		} else {
+			moveTo(home);
+		}
+		currentLeisureDuration = RandomHelper.nextIntFromTo(1, 3);
+		
+		//moveTo(home);
+	}	
+
+	private int currentLeisureDuration;
+	public int getCurrentLeisureDuration() {
+		return currentLeisureDuration;
+	}
 
 	@ScheduledMethod(start = 1, interval = 1, priority = -1)
 	public void sneeze() {
@@ -115,7 +146,7 @@ public class Person {
 		for(Object other : others) {
 			if(!(other instanceof Person)) continue;
 			Person person = (Person) other;
-			if (RandomHelper.nextDouble() > 0.5) {
+			if (RandomHelper.nextDouble() > 0.99) {
 				person.exposed();
 			}
 		}
@@ -154,4 +185,53 @@ public class Person {
 	public boolean isRemoved() {
 		return is("Removed");
 	}
+	
+	public Place getHome() {
+		return home;
+	}
+
+	public void setHome(Place home) {
+		this.home = home;
+	}
+
+	public Place getWorkPlace() {
+		return workPlace;
+	}
+
+	public void setWorkPlace(Place workPlace) {
+		this.workPlace = workPlace;
+	}
+
+	public double getIncubationTime() {
+		return incubationTime;
+	}
+
+	public double getPreInfectious() {
+		return preInfectious;
+	}
+
+	public int getWorkStart() {
+		return workStart;
+	}
+
+	public void setWorkStart(int workStart) {
+		this.workStart = workStart;
+	}
+
+	public int getWorkEnd() {
+		return workEnd;
+	}
+
+	public void setWorkEnd(int workEnd) {
+		this.workEnd = workEnd;
+	}
+
+	public int getSleepStart() {
+		return sleepStart;
+	}
+
+	public void setSleepStart(int sleepStart) {
+		this.sleepStart = sleepStart;
+	}
+
 }

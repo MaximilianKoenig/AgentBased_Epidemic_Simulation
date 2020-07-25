@@ -1,5 +1,6 @@
 package agentBased_Epidemic_Simulation;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -21,10 +22,22 @@ import repast.simphony.valueLayer.GridValueLayer;
 
 public class ScenarioBuilder implements ContextBuilder<Object> {
 	
+	
+	public static final int daysToTicks = 24;
 	private static final int gridsize = 100;
+	private static final int healthyCount = 4000;
+	private static final int exposedCount = 10;
+	private static final int workPlaceCount = 800;
+	private static final int leisureCount = 100;
+	
+	public static Clock clock;
+	public static List<Place> leisurePlaces;
 
 	@Override
 	public Context<Object> build(Context<Object> context) {
+
+		RandomHelper.createNormal(1000, 5000);
+		
 		context.setId("AgentBased_Epidemic_Simulation");
 		
 		ContinuousSpaceFactory spaceFactory = ContinuousSpaceFactoryFinder.createContinuousSpaceFactory(null);
@@ -40,35 +53,63 @@ public class ScenarioBuilder implements ContextBuilder<Object> {
 				new SimpleGridAdder<Object>(),
 					true, gridsize, gridsize));
 		
+		
 		GridValueLayer placeMatrix = new GridValueLayer("Place Matrix", true, 
 				new repast.simphony.space.grid.WrapAroundBorders(), gridsize, gridsize);
 		
 		context.addValueLayer(placeMatrix);
 		
-		int healthyCount = 1000;
+		clock = new Clock();
+		context.add(clock);
+		
 		for (int i = 0; i < healthyCount; i++) {
 			context.add(new Person(space, grid, false));
 		}
 		
-		int exposedCount = 10;
 		for (int i = 0; i < exposedCount; i++) {
 			context.add(new Person(space, grid, true));
 		}
 		
-		int homeCount = 300;
-		for (int i = 0; i < homeCount; i++) {
-			context.add(new Place(grid, placeMatrix, PlaceType.HOME));
-		}
 		
-		int workPlaceCount = 200;
 		for (int i = 0; i < workPlaceCount; i++) {
 			context.add(new Place(grid, placeMatrix, PlaceType.WORK));
 		}
 		
-		int leisureCount = 50;
 		for (int i = 0; i < leisureCount; i++) {
 			context.add(new Place(grid, placeMatrix, PlaceType.LEISURE));
 		}
+		
+		
+		Place home = Place.home(grid, placeMatrix);
+		context.add(home);
+		
+		List<Place> workPlaces = StreamSupport.stream(context.getObjects(Place.class).spliterator(), false)
+				.map(Place.class::cast)
+				.filter(place -> place.getType().equals(PlaceType.WORK))
+				.collect(Collectors.toList());
+		
+		leisurePlaces = StreamSupport.stream(context.getObjects(Place.class).spliterator(), false)
+				.map(Place.class::cast)
+				.filter(place -> place.getType().equals(PlaceType.LEISURE))
+				.collect(Collectors.toList());
+		
+		for(Person person : StreamSupport.stream(context.getObjects(Person.class).spliterator(), false).map(Person.class::cast).collect(Collectors.toList())) {
+			if(!home.hasCapacity()) {
+				home = Place.home(grid, placeMatrix);
+				context.add(home);
+			}
+			person.setHome(home);
+			home.addPerson(person);
+			
+			Place workPlace = null;
+			double distanceFromHome = Integer.MAX_VALUE;
+			for(int i = 0; i < distanceFromHome; i++) {
+				workPlace = workPlaces.get(RandomHelper.nextIntFromTo(0, workPlaces.size() - 1));
+				distanceFromHome = space.getDistance(space.getLocation(home), space.getLocation(workPlace));
+			}
+			person.setWorkPlace(workPlace);
+			workPlace.addPerson(person);
+		};
 		
 		for (Object obj : context.getObjects(Place.class)) {
 			Place place = (Place) obj;
@@ -76,25 +117,6 @@ public class ScenarioBuilder implements ContextBuilder<Object> {
 			grid.moveTo(place, (int)pt.getX(), (int)pt.getY());
 			placeMatrix.set(place.getType().index(), (int)pt.getX(), (int)pt.getY());
 		}
-		
-		List<Place> homes = StreamSupport.stream(context.getObjects(Place.class).spliterator(), false)
-				.map(Place.class::cast)
-				.filter(place -> place.getType().equals(PlaceType.HOME))
-				.collect(Collectors.toList());
-		List<Place> workPlaces = StreamSupport.stream(context.getObjects(Place.class).spliterator(), false)
-				.map(Place.class::cast)
-				.filter(place -> place.getType().equals(PlaceType.WORK))
-				.collect(Collectors.toList());
-		
-		StreamSupport.stream(context.getObjects(Person.class).spliterator(), false).map(Person.class::cast).forEach(person -> {
-			Place home = homes.get(RandomHelper.nextIntFromTo(0, homes.size() - 1));
-			Place workPlace = workPlaces.get(RandomHelper.nextIntFromTo(0, workPlaces.size() - 1));
-			person.setHome(home);
-			home.addPerson(person);
-			person.moveTo(home);
-			person.setWorkPlace(workPlace);
-			workPlace.addPerson(person);
-		});
 		
 		
 		return context;
