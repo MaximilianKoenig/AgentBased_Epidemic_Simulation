@@ -36,6 +36,10 @@ public class Person {
 	
 	static int foocount = 0;
 	
+	public static double incubationMean = 5.057;
+	public static double meanOfInfectious = incubationMean - 1.5 + 12;
+	public static double infectionChance = 0.01;
+	
 	private double incubationTime = Random.nextLogNormal(1.621, 0.418);
 	private double preInfectious = Math.max(0.1, incubationTime - RandomHelper.getUniform().nextDoubleFromTo(0, 3));
 	{
@@ -80,7 +84,7 @@ public class Person {
 	}
 	
 	public void goToWork() {
-		if(isSymptomatic()) {
+		if(isSymptomatic() || workPlace.hasHomeOffice() && getContext().homeOfficeEnabled) {
 			moveTo(home);
 			return;
 		}
@@ -97,12 +101,12 @@ public class Person {
 			return;
 		}
 		
-		if(RandomHelper.nextDoubleFromTo(0, 1) > 0.33) {
+		if(RandomHelper.nextDoubleFromTo(0, 1) > 0.66) {
 			Place leisurePlace = null;
 			double distanceFromHome = Integer.MAX_VALUE;
 			for(int i = 10; i < distanceFromHome; i++) {
-				leisurePlace = ScenarioBuilder.leisurePlaces.get(RandomHelper.nextIntFromTo(0, ScenarioBuilder.leisurePlaces.size() - 1));
-				distanceFromHome = space.getDistance(space.getLocation(home), space.getLocation(leisurePlace));
+				leisurePlace = getContext().leisurePlaces.get(RandomHelper.nextIntFromTo(0, getContext().leisurePlaces.size() - 1));
+				distanceFromHome = grid.getDistance(grid.getLocation(home), grid.getLocation(leisurePlace));
 			}
 			moveTo(leisurePlace);
 		} else {
@@ -123,16 +127,6 @@ public class Person {
 		if (isInfectious()) infectAdjacent();
 	}
 	
-	public void moveTowards(GridPoint pt) {
-		if (!pt.equals(grid.getLocation(this))) {
-			NdPoint myPoint = space.getLocation(this);
-			NdPoint otherPoint = new NdPoint(pt.getX(), pt.getY());
-			double angle = SpatialMath.calcAngleFor2DMovement(space, myPoint, otherPoint);
-			space.moveByVector(this, 1, angle, 0);
-			myPoint =  space.getLocation(this);
-			grid.moveTo(this, (int)myPoint.getX(), (int)myPoint.getY());
-		}
-	}
 	
 	public void moveTo(Place place) {
 		GridPoint location = grid.getLocation(place);
@@ -141,18 +135,21 @@ public class Person {
 	}
 	
 	public void infectAdjacent() {
+		getContext().infectedThisTick++;
 		GridPoint pt = grid.getLocation(this);
 		Iterable<Object> others = grid.getObjectsAt(pt.getX(), pt.getY());
 		for(Object other : others) {
 			if(!(other instanceof Person)) continue;
+			getContext().infectedMeetingsThisTick ++;
 			Person person = (Person) other;
-			if (RandomHelper.nextDouble() > 0.99) {
+			if (RandomHelper.nextDouble() < infectionChance) {
 				person.exposed();
 			}
 		}
 	}
 	
 	public void exposed() {
+		
 		infectionState.receiveMessage("exposed");
 	}
 	
@@ -232,6 +229,10 @@ public class Person {
 
 	public void setSleepStart(int sleepStart) {
 		this.sleepStart = sleepStart;
+	}
+	
+	public Scenario getContext() {
+		return (Scenario) ContextUtils.getContext(this);
 	}
 
 }

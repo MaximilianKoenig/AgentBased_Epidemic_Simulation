@@ -13,6 +13,8 @@ public class Place {
 	private List<Person> people;
 	
 	private int capacity = Integer.MAX_VALUE;
+	
+	private boolean hasHomeOffice = RandomHelper.nextIntFromTo(1, 3) == 1;
 
 	public static Place home(Grid<Object> grid, GridValueLayer placeMatrix) {
 		Place home = new Place(grid, placeMatrix, PlaceType.HOME);
@@ -49,5 +51,13 @@ public class Place {
 	
 	public boolean hasCapacity() {
 		return capacity > people.size();
+	}
+
+	public boolean hasHomeOffice() {
+		return hasHomeOffice;
+	}
+
+	public void setHasHomeOffice(boolean hasHomeOffice) {
+		this.hasHomeOffice = hasHomeOffice;
 	}
 }

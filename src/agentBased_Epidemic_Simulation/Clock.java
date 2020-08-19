@@ -9,15 +9,15 @@ public class Clock {
 	
 	@ScheduledMethod(start = 1, interval = 1, priority = ScheduleParameters.FIRST_PRIORITY)
 	public void tick() {
-		currentTime = (currentTime + 1) % ScenarioBuilder.daysToTicks;
+		currentTime = (currentTime + 1) % Scenario.daysToTicks;
 	}
 
 	public int getCurrentTime() {
-		return currentTime * 24 / ScenarioBuilder.daysToTicks;
+		return currentTime * 24 / Scenario.daysToTicks;
 	}	
 	
 	public static boolean isTimeBetween(int start, int end) {
-		int time = ScenarioBuilder.clock.getCurrentTime();
+		int time = Scenario.clock.getCurrentTime();
 		if(time < start) time += 24;
 		if(end < start) end += 24;
 		return start <= time && time < end;
