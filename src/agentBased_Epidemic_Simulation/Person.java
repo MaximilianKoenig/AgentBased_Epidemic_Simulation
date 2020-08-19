@@ -48,7 +48,7 @@ public class Person {
 			System.out.println(foocount);
 		}
 	}
-	private int workStart = (int) RandomHelper.getNormal().nextDouble(8, 2) % 24;
+	private int workStart = (int) (RandomHelper.getNormal().nextDouble(8, 2) + 24) % 24;
 	private int workEnd = (workStart + (int) Random.nextSymmetricTriangular(8, 4) + 24) % 24;
 	private int sleepStart = (workStart - (int) Random.nextSymmetricTriangular(8, 3) + 24) % 24;
 
