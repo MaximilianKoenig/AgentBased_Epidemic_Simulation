@@ -39,17 +39,18 @@ public class Scenario extends DefaultContext<Object> {
 	public static final int daysToTicks = 24;
 	
 	private static final int gridsize = 100;
-	private static final int exposedCount = 100;
-	private static final int healthyCount = 4000 - exposedCount;
+	private static final int initialInfectedCount = 10;
+	private static final int population = 4000;
 	private static final int workPlaceCount = 600;
 	private static final int leisureCount = 100;
 	public boolean homeOfficeEnabled = true;
+	public boolean healthInsuranceEnabled = true;
 	
 	public static Clock clock;
 	public static List<Place> leisurePlaces;
 	
-	public int infectionsTotal = exposedCount;
-	public int susceptible = healthyCount;
+	public int infectionsTotal = initialInfectedCount;
+	public int susceptible = population - initialInfectedCount;
 	public List<Integer> infectionCounts = new ArrayList<>();
 	public double reproductionNumber;
 
@@ -100,12 +101,8 @@ public class Scenario extends DefaultContext<Object> {
 		}
 		regenerateRandomPositions();
 				
-		for (int i = 0; i < healthyCount; i++) {
+		for (int i = 0; i < population; i++) {
 			this.add(new Person(space, grid, false));
-		}
-		
-		for (int i = 0; i < exposedCount; i++) {
-			this.add(new Person(space, grid, true));
 		}
 		
 		
@@ -143,10 +140,18 @@ public class Scenario extends DefaultContext<Object> {
 			}
 			person.setWorkPlace(workPlace);
 			workPlace.addPerson(person);
+			
 		};
+		
+		RunEnvironment.getInstance().getCurrentSchedule().schedule(ScheduleParameters.createOneTime(0), () -> {
+			for(Object person : getRandomObjects(Person.class, initialInfectedCount)) {
+				((Person)person).infectionState.activateState("non-Symptomatic");
+			}
+		});
 		
 		Parameters params = RunEnvironment.getInstance().getParameters();
 		homeOfficeEnabled = (boolean) params.getValue("allowHomeOffice");
+		healthInsuranceEnabled = (boolean) params.getValue("allowHealthInsurance");
 		//RunEnvironment.getInstance().pauseAt(3000);
 		RunEnvironment.getInstance().endAt(3000);
 		

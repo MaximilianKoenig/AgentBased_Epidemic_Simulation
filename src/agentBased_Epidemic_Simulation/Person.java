@@ -34,7 +34,6 @@ public class Person {
 	@ProbedProperty(displayName="DailyRoutine")
 	DailyRoutine dailyRoutine = DailyRoutine.createStateChart(this, 0);
 	
-	static int foocount = 0;
 	
 	public static double incubationMean = 5.057;
 	public static double meanOfInfectious = incubationMean - 1.5 + 12;
@@ -42,21 +41,16 @@ public class Person {
 	
 	private double incubationTime = Random.nextLogNormal(1.621, 0.418);
 	private double preInfectious = Math.max(0.1, incubationTime - RandomHelper.getUniform().nextDoubleFromTo(0, 3));
-	{
-		if(preInfectious == 0) {
-			foocount ++;
-			System.out.println(foocount);
-		}
-	}
+
 	private int workStart = (int) (RandomHelper.getNormal().nextDouble(8, 2) + 24) % 24;
 	private int workEnd = (workStart + (int) Random.nextSymmetricTriangular(8, 4) + 24) % 24;
 	private int sleepStart = (workStart - (int) Random.nextSymmetricTriangular(8, 3) + 24) % 24;
 
 
-	public Person(ContinuousSpace<Object> space, Grid<Object> grid, boolean exposed) {
+	public Person(ContinuousSpace<Object> space, Grid<Object> grid, boolean initiallyExposed) {
 		this.space = space;
 		this.grid = grid;
-		if (exposed) this.exposed();
+		if (initiallyExposed) this.exposed();
 	}
 	
 	public String getInfectionStateState(){
@@ -84,11 +78,13 @@ public class Person {
 	}
 	
 	public void goToWork() {
-		if(isSymptomatic() || workPlace.hasHomeOffice() && getContext().homeOfficeEnabled) {
+		if(workPlace.hasHomeOffice() && getContext().homeOfficeEnabled) {
 			moveTo(home);
-			return;
+		} else if(isSymptomatic() && getContext().healthInsuranceEnabled) {
+			moveTo(home);
+		} else {
+			moveTo(workPlace);
 		}
-		moveTo(workPlace);
 	}
 	
 	public void goToBed() {
