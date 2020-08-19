@@ -147,7 +147,8 @@ public class Scenario extends DefaultContext<Object> {
 		
 		Parameters params = RunEnvironment.getInstance().getParameters();
 		homeOfficeEnabled = (boolean) params.getValue("allowHomeOffice");
-		RunEnvironment.getInstance().pauseAt(3000);
+		//RunEnvironment.getInstance().pauseAt(3000);
+		RunEnvironment.getInstance().endAt(3000);
 		
 		return this;
 	}
