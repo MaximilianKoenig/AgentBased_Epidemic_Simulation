@@ -16,8 +16,8 @@ public class Clock {
 		return currentTime * 24 / Scenario.daysToTicks;
 	}	
 	
-	public static boolean isTimeBetween(int start, int end) {
-		int time = Scenario.clock.getCurrentTime();
+	public boolean isTimeBetween(int start, int end) {
+		int time = getCurrentTime();
 		if(time < start) time += 24;
 		if(end < start) end += 24;
 		return start <= time && time < end;

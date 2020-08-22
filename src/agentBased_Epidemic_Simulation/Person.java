@@ -26,8 +26,8 @@ public class Person {
 	
 	private ContinuousSpace<Object> space;
 	private Grid<Object> grid;
-	private Place home;
-	private Place workPlace;
+	private HomePlace home;
+	private WorkPlace workPlace;
 	@ProbedProperty(displayName="InfectionState")
 	InfectionState infectionState = InfectionState.createStateChart(this, 0);
 	
@@ -35,15 +35,21 @@ public class Person {
 	DailyRoutine dailyRoutine = DailyRoutine.createStateChart(this, 0);
 	
 	
-	public static double incubationMean = 5.057;
-	public static double meanOfInfectious = incubationMean - 1.5 + 12;
-	public static double infectionChance = 0.01;
-	
+	public static final double meanOfIncubationTime = 5.057;
 	private double incubationTime = Random.nextLogNormal(1.621, 0.418);
-	private double preInfectious = Math.max(0.1, incubationTime - RandomHelper.getUniform().nextDoubleFromTo(0, 3));
 
-	private int workStart = (int) (RandomHelper.getNormal().nextDouble(8, 2) + 24) % 24;
-	private int workEnd = (workStart + (int) Random.nextSymmetricTriangular(8, 4) + 24) % 24;
+	public static final double meanOfPreSymptomatic = 2;
+	private double latentTime = Math.max(0.1, incubationTime - RandomHelper.getUniform().nextDoubleFromTo(1, 3));
+	
+	public static final double meanOfPostSymptomaticInfectiousDuration = 8;
+	private double postSymptomaticInfectiousDuration = Math.max(0.5, RandomHelper.getNormal().nextDouble(8, 3.5));
+	
+	public static final double meanOfInfectious = meanOfPreSymptomatic + meanOfPostSymptomaticInfectiousDuration;
+	public static double infectionChance = 0.01;
+
+
+	private int workStart = (int) (RandomHelper.getNormal().nextDouble(8, 1) + 24) % 24;
+	private int workEnd = (workStart + (int) Random.nextTriangular(3, 8, 12) + 24) % 24;
 	private int sleepStart = (workStart - (int) Random.nextSymmetricTriangular(8, 3) + 24) % 24;
 
 
@@ -66,15 +72,15 @@ public class Person {
 	}
 
 	public boolean isTimeToWork() {
-		return Clock.isTimeBetween(workStart, workEnd);
+		return getContext().clock.isTimeBetween(workStart, workEnd);
 	}
 	
 	public boolean isTimeToSleep() {
-		return Clock.isTimeBetween(sleepStart, workStart);
+		return getContext().clock.isTimeBetween(sleepStart, workStart);
 	}
 	
 	public boolean isFreeTime() {
-		return Clock.isTimeBetween(workEnd, sleepStart);
+		return getContext().clock.isTimeBetween(workEnd, sleepStart);
 	}
 	
 	public void goToWork() {
@@ -98,10 +104,10 @@ public class Person {
 		}
 		
 		if(RandomHelper.nextDoubleFromTo(0, 1) > 0.66) {
-			Place leisurePlace = null;
+			LeisurePlace leisurePlace = null;
 			double distanceFromHome = Integer.MAX_VALUE;
 			for(int i = 10; i < distanceFromHome; i++) {
-				leisurePlace = getContext().leisurePlaces.get(RandomHelper.nextIntFromTo(0, getContext().leisurePlaces.size() - 1));
+				leisurePlace = (LeisurePlace) getContext().getRandomObjects(LeisurePlace.class, 1).iterator().next();
 				distanceFromHome = grid.getDistance(grid.getLocation(home), grid.getLocation(leisurePlace));
 			}
 			moveTo(leisurePlace);
@@ -136,9 +142,9 @@ public class Person {
 		Iterable<Object> others = grid.getObjectsAt(pt.getX(), pt.getY());
 		for(Object other : others) {
 			if(!(other instanceof Person)) continue;
-			getContext().infectedMeetingsThisTick ++;
 			Person person = (Person) other;
-			if (RandomHelper.nextDouble() < infectionChance) {
+			if(person.isSusceptible()) getContext().infectedMeetingsThisTick ++;
+			if (RandomHelper.nextDoubleFromTo(0, 1) < infectionChance) {
 				person.exposed();
 			}
 		}
@@ -183,7 +189,7 @@ public class Person {
 		return home;
 	}
 
-	public void setHome(Place home) {
+	public void setHome(HomePlace home) {
 		this.home = home;
 	}
 
@@ -191,7 +197,7 @@ public class Person {
 		return workPlace;
 	}
 
-	public void setWorkPlace(Place workPlace) {
+	public void setWorkPlace(WorkPlace workPlace) {
 		this.workPlace = workPlace;
 	}
 
@@ -199,8 +205,12 @@ public class Person {
 		return incubationTime;
 	}
 
-	public double getPreInfectious() {
-		return preInfectious;
+	public double getLatentTime() {
+		return latentTime;
+	}
+
+	public double getPostSymptomaticInfectiousDuration() {
+		return postSymptomaticInfectiousDuration;
 	}
 
 	public int getWorkStart() {

@@ -17,6 +17,20 @@ public class Random {
 		return (x + y) / 2;
 	}
 	
+	public static double nextTriangular(double lower, double peak, double upper) {
+		assert lower <= peak;
+		assert upper >= peak;
+		assert lower < upper;
+		
+		double u = RandomHelper.getUniform().nextDoubleFromTo(0, 1);
+		double tilt = (peak - lower) / (upper - lower);
+		if(u < tilt) {
+			return lower + Math.sqrt(u * (upper - lower) * (peak - lower));
+		} else {
+			return upper - Math.sqrt((1 - u) * (upper - lower) * (upper - peak));
+		}
+	}
+	
 	public static <T> T discrete(T[] values, double[] probabilities) {
 		assert values.length == probabilities.length;
 		double ran = RandomHelper.getUniform().nextDoubleFromTo(0, 1);

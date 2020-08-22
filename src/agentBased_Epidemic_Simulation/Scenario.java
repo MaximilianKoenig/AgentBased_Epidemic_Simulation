@@ -41,21 +41,21 @@ public class Scenario extends DefaultContext<Object> {
 	private static final int gridsize = 100;
 	private static final int initialInfectedCount = 10;
 	private static final int population = 4000;
-	private static final int workPlaceCount = 600;
+	private static final double averageWorkersPerPlace = 6.5;
+	private static final int workPlaceCount = (int)(population / averageWorkersPerPlace);
 	private static final int leisureCount = 100;
 	public boolean homeOfficeEnabled = true;
 	public boolean healthInsuranceEnabled = true;
 	
-	public static Clock clock;
-	public static List<Place> leisurePlaces;
+	public Clock clock;
 	
 	public int infectionsTotal = initialInfectedCount;
 	public int susceptible = population - initialInfectedCount;
-	public List<Integer> infectionCounts = new ArrayList<>();
+	
 	public double reproductionNumber;
 
-	public static double infectedMeetingsThisTick = 0;
-	public static double infectedThisTick = 0;
+	public double infectedMeetingsThisTick = 0;
+	public double infectedThisTick = 0;
 	
 	private ContinuousSpace<Object> space;
 	private Grid<Object> grid;
@@ -90,13 +90,13 @@ public class Scenario extends DefaultContext<Object> {
 
 		regenerateRandomPositions();
 		for (int i = 0; i < leisureCount; i++) {
-			Place leisurePlace = new Place(grid, placeMatrix, PlaceType.LEISURE);
+			Place leisurePlace = new LeisurePlace(grid, placeMatrix);
 			addPlace(leisurePlace);
 			GridPoint firstLocation = grid.getLocation(leisurePlace);
 			for(int j = 1; j < 4 && i < leisureCount; i++,j++) {
 				int dx = j & 1;
 				int dy = (j & 2) / 2;
-				addPlace(new Place(grid, placeMatrix, PlaceType.LEISURE), Optional.of(new GridPoint(firstLocation.getX()+dx, firstLocation.getY()+dy)));
+				addPlace(new LeisurePlace(grid, placeMatrix), Optional.of(new GridPoint(firstLocation.getX()+dx, firstLocation.getY()+dy)));
 			}
 		}
 		regenerateRandomPositions();
@@ -107,22 +107,15 @@ public class Scenario extends DefaultContext<Object> {
 		
 		
 		for (int i = 0; i < workPlaceCount; i++) {
-			addPlace(new Place(grid, placeMatrix, PlaceType.WORK));
+			addPlace(new WorkPlace(grid, placeMatrix));
 		}
+		
+		getRandomObjects(WorkPlace.class, workPlaceCount * 2/3).forEach(each -> ((WorkPlace) each).setHasHomeOffice(true));
 
 		
-		Place home = Place.home(grid, placeMatrix);
+		HomePlace home = Place.home(grid, placeMatrix);
 		addPlace(home);
-		
-		List<Place> workPlaces = StreamSupport.stream(this.getObjects(Place.class).spliterator(), false)
-				.map(Place.class::cast)
-				.filter(place -> place.getType().equals(PlaceType.WORK))
-				.collect(Collectors.toList());
-		
-		leisurePlaces = StreamSupport.stream(this.getObjects(Place.class).spliterator(), false)
-				.map(Place.class::cast)
-				.filter(place -> place.getType().equals(PlaceType.LEISURE))
-				.collect(Collectors.toList());
+
 		
 		for(Person person : StreamSupport.stream(this.getObjects(Person.class).spliterator(), false).map(Person.class::cast).collect(Collectors.toList())) {
 			if(!home.hasCapacity()) {
@@ -132,10 +125,10 @@ public class Scenario extends DefaultContext<Object> {
 			person.setHome(home);
 			home.addPerson(person);
 			
-			Place workPlace = null;
+			WorkPlace workPlace = null;
 			double distanceFromHome = Integer.MAX_VALUE;
 			for(int i = 0; i < distanceFromHome; i++) {
-				workPlace = workPlaces.get(RandomHelper.nextIntFromTo(0, workPlaces.size() - 1));
+				workPlace = (WorkPlace) getRandomObjects(WorkPlace.class, 1).iterator().next();
 				distanceFromHome = grid.getDistance(grid.getLocation(home), grid.getLocation(workPlace));
 			}
 			person.setWorkPlace(workPlace);
@@ -203,6 +196,10 @@ public class Scenario extends DefaultContext<Object> {
 	
 	public double getReprocutionNumber() {
 		return reproductionNumber;
+	}
+	
+	public double getBasicReprocutionNumber() {
+		return reproductionNumber * (double) population / (double) susceptible;
 	}
 	
 }
